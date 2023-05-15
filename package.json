@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "yarn fetch && next dev",
     "build": "yarn fetch && next build",
+    "export": "yarn fetch && next build && next export",
     "start": "next start",
     "lint": "next lint",
     "fetch": "node ./scripts/fetch-prompts.mjs",

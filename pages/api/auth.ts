@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
-import { getServerSideConfig } from "../config/server";
+import { getServerSideConfig } from "@/app/config/server";
 import md5 from "spark-md5";
-import { ACCESS_CODE_PREFIX } from "../constant";
+import { ACCESS_CODE_PREFIX } from "@/app/constant";
 
 const serverConfig = getServerSideConfig();
 
