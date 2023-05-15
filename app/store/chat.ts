@@ -98,6 +98,8 @@ interface ChatStore {
   getMemoryPrompt: () => ChatMessage;
 
   clearAllData: () => void;
+  streamConfig: boolean;
+  setStreamConfig: (newConfig: boolean) => void;
 }
 
 function countMessages(msgs: ChatMessage[]) {
@@ -110,7 +112,10 @@ export const useChatStore = create<ChatStore>()(
       sessions: [createEmptySession()],
       currentSessionIndex: 0,
       globalId: 0,
-
+      streamConfig: false,
+      setStreamConfig(newConfig) {
+        set({ streamConfig: newConfig });
+      },
       clearSessions() {
         set(() => ({
           sessions: [createEmptySession()],
@@ -274,7 +279,7 @@ export const useChatStore = create<ChatStore>()(
         console.log("[User Input] ", sendMessages);
         api.llm.chat({
           messages: sendMessages,
-          config: { ...modelConfig, stream: true },
+          config: { ...modelConfig, stream: get().streamConfig },
           onUpdate(message) {
             botMessage.streaming = true;
             botMessage.content = message;

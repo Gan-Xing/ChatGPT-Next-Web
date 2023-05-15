@@ -1,8 +1,9 @@
 /** @type {import('next').NextConfig} */
 
 const nextConfig = {
+  assetPrefix: ".",
   experimental: {
-    appDir: true,
+    appDir: false,
   },
   async rewrites() {
     const ret = [

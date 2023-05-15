@@ -1,5 +1,10 @@
 import { REQUEST_TIMEOUT_MS } from "@/app/constant";
-import { useAccessStore, useAppConfig, useChatStore } from "@/app/store";
+import {
+  useAccessStore,
+  useAppConfig,
+  useChatStore,
+  useCustomConfig,
+} from "@/app/store";
 
 import { ChatOptions, getHeaders, LLMApi, LLMUsage } from "../api";
 import Locale from "../../locales";
@@ -10,13 +15,20 @@ export class ChatGPTApi implements LLMApi {
   public SubsPath = "dashboard/billing/subscription";
 
   path(path: string): string {
-    const openaiUrl = useAccessStore.getState().openaiUrl;
-    if (openaiUrl.endsWith("/")) openaiUrl.slice(0, openaiUrl.length - 1);
+    let openaiUrl = useAccessStore.getState().openaiUrl;
+    if (openaiUrl.endsWith("/"))
+      openaiUrl = openaiUrl.slice(0, openaiUrl.length - 1);
     return [openaiUrl, path].join("/");
   }
 
   extractMessage(res: any) {
     return res.choices?.at(0)?.message?.content ?? "";
+  }
+
+  extractCustomMessage(res: any) {
+    return res?.success
+      ? res?.data?.data?.choices?.at(0)?.message?.content
+      : res?.message;
   }
 
   async chat(options: ChatOptions) {
@@ -25,6 +37,10 @@ export class ChatGPTApi implements LLMApi {
       content: v.content,
     }));
 
+    const customConfig = {
+      ...useCustomConfig.getState(),
+      ...useChatStore.getState().currentSession(),
+    };
     const modelConfig = {
       ...useAppConfig.getState().modelConfig,
       ...useChatStore.getState().currentSession().mask.modelConfig,
@@ -40,6 +56,21 @@ export class ChatGPTApi implements LLMApi {
       temperature: modelConfig.temperature,
       presence_penalty: modelConfig.presence_penalty,
     };
+    const customPayload = {
+      chatId: customConfig.id,
+      searchId: customConfig.searchId,
+      messages: messages
+        ?.slice()
+        ?.reverse()
+        ?.find(
+          (message: { role: string; content: string }) =>
+            message.role === "user",
+        )?.content,
+      stream: options.config.stream,
+      model: modelConfig.model,
+      temperature: modelConfig.temperature,
+      presence_penalty: modelConfig.presence_penalty,
+    };
 
     console.log("[Request] openai payload: ", requestPayload);
 
@@ -48,10 +79,14 @@ export class ChatGPTApi implements LLMApi {
     options.onController?.(controller);
 
     try {
-      const chatPath = this.path(this.ChatPath);
+      const chatPath = customConfig.customSet
+        ? customConfig.customUrl
+        : this.path(this.ChatPath);
       const chatPayload = {
         method: "POST",
-        body: JSON.stringify(requestPayload),
+        body: JSON.stringify(
+          customConfig.customSet ? customPayload : requestPayload,
+        ),
         signal: controller.signal,
         headers: getHeaders(),
       };
@@ -120,7 +155,9 @@ export class ChatGPTApi implements LLMApi {
         clearTimeout(reqestTimeoutId);
 
         const resJson = await res.json();
-        const message = this.extractMessage(resJson);
+        const message = customConfig.customSet
+          ? this.extractCustomMessage(resJson)
+          : this.extractMessage(resJson);
         options.onFinish(message);
       }
     } catch (e) {

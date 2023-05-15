@@ -1,5 +1,6 @@
 import { useDebouncedCallback } from "use-debounce";
 import { useState, useRef, useEffect, useLayoutEffect } from "react";
+import { useRouter } from "next/router";
 
 import SendWhiteIcon from "../icons/send-white.svg";
 import BrainIcon from "../icons/brain.svg";
@@ -31,6 +32,7 @@ import {
   Theme,
   useAppConfig,
   DEFAULT_TOPIC,
+  useCustomConfig,
 } from "../store";
 
 import {
@@ -403,6 +405,22 @@ export function Chat() {
   ]);
   const config = useAppConfig();
   const fontSize = config.fontSize;
+
+  const router = useRouter();
+  const { search_id, customUrl, stremConfig } = router.query;
+  const customConfig = useCustomConfig();
+  useEffect(() => {
+    const finStream =
+      typeof stremConfig === "boolean" ? stremConfig : chatStore.streamConfig;
+    chatStore.setStreamConfig(finStream);
+    customConfig.update((config) => {
+      config.searchId =
+        typeof search_id === "string" ? search_id : config.searchId;
+      config.customUrl =
+        typeof customUrl === "string" ? customUrl : config.customUrl;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search_id, customUrl]);
 
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [userInput, setUserInput] = useState("");
