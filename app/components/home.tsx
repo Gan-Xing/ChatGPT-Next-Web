@@ -22,7 +22,7 @@ import {
   useLocation,
 } from "react-router-dom";
 import { SideBar } from "./sidebar";
-import { useAppConfig } from "../store/config";
+import { useAppConfig, useCustomConfig } from "../store";
 
 export function Loading(props: { noLogo?: boolean }) {
   return (
@@ -100,10 +100,13 @@ const loadAsyncGoogleFont = () => {
 
 function Screen() {
   const config = useAppConfig();
+  const customConfig = {
+    ...useCustomConfig.getState(),
+  };
   const location = useLocation();
   const isHome = location.pathname === Path.Home;
   const isMobileScreen = useMobileScreen();
-
+  console.log(customConfig.customSet);
   useEffect(() => {
     loadAsyncGoogleFont();
   }, []);
@@ -121,7 +124,11 @@ function Screen() {
     >
       <SideBar className={isHome ? styles["sidebar-show"] : ""} />
 
-      <div className={styles["window-content"]} id={SlotID.AppBody}>
+      <div
+        className={styles["window-content"]}
+        id={SlotID.AppBody}
+        style={customConfig.customSet ? { width: "100%" } : {}}
+      >
         <Routes>
           <Route path={Path.Home} element={<Chat />} />
           <Route path={Path.NewChat} element={<NewChat />} />

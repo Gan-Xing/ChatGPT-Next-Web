@@ -13,7 +13,7 @@ import PluginIcon from "../icons/plugin.svg";
 
 import Locale from "../locales";
 
-import { useAppConfig, useChatStore } from "../store";
+import { useAppConfig, useChatStore, useCustomConfig } from "../store";
 
 import {
   MAX_SIDEBAR_WIDTH,
@@ -104,7 +104,7 @@ function useDragSideBar() {
 
 export function SideBar(props: { className?: string }) {
   const chatStore = useChatStore();
-
+  const customConfig = useCustomConfig();
   // drag side bar
   const { onDragMouseDown, shouldNarrow } = useDragSideBar();
   const navigate = useNavigate();
@@ -117,6 +117,7 @@ export function SideBar(props: { className?: string }) {
       className={`${styles.sidebar} ${props.className} ${
         shouldNarrow && styles["narrow-sidebar"]
       }`}
+      style={{ display: `${customConfig.customSet ? "none" : "flex"}` }}
     >
       <div className={styles["sidebar-header"]}>
         <div className={styles["sidebar-title"]}>ChatGPT Next</div>
