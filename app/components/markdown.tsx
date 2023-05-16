@@ -8,6 +8,7 @@ import RehypeHighlight from "rehype-highlight";
 import { useRef, useState, RefObject, useEffect } from "react";
 import { copyToClipboard } from "../utils";
 import mermaid from "mermaid";
+import { useCustomConfig } from "../store";
 
 import LoadingIcon from "../icons/three-dots.svg";
 import React from "react";
@@ -93,6 +94,7 @@ function _MarkDownContent(props: { content: string }) {
   // Preprocess content by appending a space after each URL
   const preProcessedContent = props.content.replace(urlPattern, "$1 ");
 
+  const customConfig = useCustomConfig.getState();
   return (
     <ReactMarkdown
       remarkPlugins={[RemarkMath, RemarkGfm, RemarkBreaks]}
@@ -111,7 +113,11 @@ function _MarkDownContent(props: { content: string }) {
         a: (aProps) => {
           let href = aProps.href || "";
           const isInternal = /^\/#/i.test(href);
-          const target = isInternal ? "_self" : aProps.target ?? "_blank";
+          const target = customConfig.customSet
+            ? "_blank"
+            : isInternal
+            ? "_self"
+            : aProps.target ?? "_blank";
 
           // Remove the appended space
           if (href.endsWith(" ")) {
