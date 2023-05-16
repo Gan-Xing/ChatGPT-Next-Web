@@ -86,6 +86,13 @@ export function PreCode(props: { children: any }) {
 }
 
 function _MarkDownContent(props: { content: string }) {
+  // Regular expression for matching URLs
+  const urlPattern =
+    /(\bhttps?:\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/gi;
+
+  // Preprocess content by appending a space after each URL
+  const preProcessedContent = props.content.replace(urlPattern, "$1 ");
+
   return (
     <ReactMarkdown
       remarkPlugins={[RemarkMath, RemarkGfm, RemarkBreaks]}
@@ -102,14 +109,20 @@ function _MarkDownContent(props: { content: string }) {
       components={{
         pre: PreCode,
         a: (aProps) => {
-          const href = aProps.href || "";
+          let href = aProps.href || "";
           const isInternal = /^\/#/i.test(href);
           const target = isInternal ? "_self" : aProps.target ?? "_blank";
-          return <a {...aProps} target={target} />;
+
+          // Remove the appended space
+          if (href.endsWith(" ")) {
+            href = href.slice(0, -1);
+          }
+
+          return <a {...aProps} href={href} target={target} />;
         },
       }}
     >
-      {props.content}
+      {preProcessedContent}
     </ReactMarkdown>
   );
 }
