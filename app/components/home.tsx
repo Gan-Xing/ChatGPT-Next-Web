@@ -106,7 +106,7 @@ function Screen() {
   const location = useLocation();
   const isHome = location.pathname === Path.Home;
   const isMobileScreen = useMobileScreen();
-  console.log(customConfig.customSet);
+
   useEffect(() => {
     loadAsyncGoogleFont();
   }, []);

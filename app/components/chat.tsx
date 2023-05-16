@@ -321,6 +321,9 @@ export function ChatActions(props: {
 }) {
   const config = useAppConfig();
   const navigate = useNavigate();
+  const customState = {
+    ...useCustomConfig.getState(),
+  };
 
   // switch themes
   const theme = config.theme;
@@ -337,7 +340,10 @@ export function ChatActions(props: {
   const stopAll = () => ChatControllerPool.stopAll();
 
   return (
-    <div className={chatStyle["chat-input-actions"]}>
+    <div
+      className={chatStyle["chat-input-actions"]}
+      style={{ display: customState.customSet ? "none" : "" }}
+    >
       {couldStop && (
         <div
           className={`${chatStyle["chat-input-action"]} clickable`}
@@ -409,6 +415,9 @@ export function Chat() {
   const router = useRouter();
   const { search_id, customUrl, stremConfig } = router.query;
   const customConfig = useCustomConfig();
+  const customState = {
+    ...useCustomConfig.getState(),
+  };
   useEffect(() => {
     const finStream =
       typeof stremConfig === "boolean" ? stremConfig : chatStore.streamConfig;
@@ -639,7 +648,10 @@ export function Chat() {
 
   return (
     <div className={styles.chat} key={session.id}>
-      <div className="window-header">
+      <div
+        className="window-header"
+        style={{ display: customState.customSet ? "none" : "" }}
+      >
         <div className="window-header-title">
           <div
             className={`window-header-main-title " ${styles["chat-body-title"]}`}
