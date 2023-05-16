@@ -11,6 +11,7 @@ import { StoreKey } from "../constant";
 import { api, RequestMessage } from "../client/api";
 import { ChatControllerPool } from "../client/controller";
 import { prettyObject } from "../utils/format";
+import { useCustomConfig } from "./custom";
 
 export type ChatMessage = RequestMessage & {
   date: string;
@@ -174,6 +175,7 @@ export const useChatStore = create<ChatStore>()(
       deleteSession(index) {
         const deletingLastSession = get().sessions.length === 1;
         const deletedSession = get().sessions.at(index);
+        const customConfig = useCustomConfig.getState();
 
         if (!deletedSession) return;
 
@@ -202,16 +204,18 @@ export const useChatStore = create<ChatStore>()(
           sessions,
         }));
 
-        showToast(
-          Locale.Home.DeleteToast,
-          {
-            text: Locale.Home.Revert,
-            onClick() {
-              set(() => restoreState);
+        if (!customConfig.customSet) {
+          showToast(
+            Locale.Home.DeleteToast,
+            {
+              text: Locale.Home.Revert,
+              onClick() {
+                set(() => restoreState);
+              },
             },
-          },
-          5000,
-        );
+            5000,
+          );
+        }
       },
 
       currentSession() {

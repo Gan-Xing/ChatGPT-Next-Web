@@ -419,9 +419,11 @@ export function Chat() {
     ...useCustomConfig.getState(),
   };
   useEffect(() => {
-    const finStream =
+    const customStream =
       typeof stremConfig === "boolean" ? stremConfig : chatStore.streamConfig;
-    chatStore.setStreamConfig(finStream);
+    chatStore.setStreamConfig(customStream);
+    customState.customSet &&
+      chatStore.deleteSession(chatStore.currentSessionIndex);
     customConfig.update((config) => {
       config.searchId =
         typeof search_id === "string" ? search_id : config.searchId;
@@ -429,7 +431,7 @@ export function Chat() {
         typeof customUrl === "string" ? customUrl : config.customUrl;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search_id, customUrl]);
+  }, [search_id, customUrl, stremConfig]);
 
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [userInput, setUserInput] = useState("");
