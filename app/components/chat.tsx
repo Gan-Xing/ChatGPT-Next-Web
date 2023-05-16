@@ -490,8 +490,8 @@ export function Chat() {
   const SEARCH_TEXT_LIMIT = 30;
   const onInput = (text: string) => {
     setUserInput(text);
+    setIsTyping(true);
     const n = text.trim().length;
-
     // clear search results
     if (n === 0) {
       setPromptHints([]);
@@ -501,7 +501,6 @@ export function Chat() {
         let searchText = text.slice(1);
         onSearch(searchText);
       }
-      setIsTyping(true);
     }
   };
 
@@ -530,6 +529,7 @@ export function Chat() {
       userInput.length <= 0 &&
       !(e.metaKey || e.altKey || e.ctrlKey)
     ) {
+      setIsTyping(true);
       setUserInput(localStorage.getItem(LAST_INPUT_KEY) ?? "");
       e.preventDefault();
       return;
