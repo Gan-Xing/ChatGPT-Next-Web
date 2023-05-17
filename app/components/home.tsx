@@ -127,7 +127,7 @@ function Screen() {
       <div
         className={styles["window-content"]}
         id={SlotID.AppBody}
-        style={customConfig.customSet ? { width: "100%" } : {}}
+        style={customConfig.customSet ? { width: "100%", height: "100vh" } : {}}
       >
         <Routes>
           <Route path={Path.Home} element={<Chat />} />
