@@ -429,7 +429,9 @@ export function Chat() {
       config.searchId =
         typeof search_id === "string" ? search_id : config.searchId;
       config.customUrl =
-        typeof customUrl === "string" ? customUrl : config.customUrl;
+        typeof customUrl === "string"
+          ? `${customUrl}/wp-json/aigc/v1/aigc/context`
+          : config.customUrl;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search_id, customUrl, stremConfig]);
