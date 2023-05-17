@@ -31,6 +31,7 @@ const cs: LocaleType = {
       return inputHints + ", / pro vyhledávání pokynů";
     },
     Send: "Odeslat",
+    Clear: "Vymazat",
     Config: {
       Reset: "Obnovit výchozí",
       SaveAs: "Uložit jako Masku",

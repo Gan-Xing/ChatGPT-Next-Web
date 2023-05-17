@@ -31,6 +31,7 @@ const tr: LocaleType = {
       return inputHints + ", komutları aramak için / (eğik çizgi)";
     },
     Send: "Gönder",
+    Clear: "Temizle",
     Config: {
       Reset: "Reset to Default",
       SaveAs: "Save as Mask",

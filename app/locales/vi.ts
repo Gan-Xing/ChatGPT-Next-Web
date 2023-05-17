@@ -31,6 +31,7 @@ const vi: LocaleType = {
       return inputHints + ", / để tìm kiếm mẫu gợi ý";
     },
     Send: "Gửi",
+    Clear: "Xóa sạch",
     Config: {
       Reset: "Khôi phục cài đặt gốc",
       SaveAs: "Lưu dưới dạng Mẫu",

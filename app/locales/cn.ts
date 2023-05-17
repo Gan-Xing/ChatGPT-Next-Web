@@ -30,6 +30,7 @@ const cn = {
       return inputHints + "，/ 触发补全";
     },
     Send: "发送",
+    Clear: "清空",
     Config: {
       Reset: "重置默认",
       SaveAs: "另存为面具",

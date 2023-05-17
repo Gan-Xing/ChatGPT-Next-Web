@@ -31,6 +31,7 @@ const ru: LocaleType = {
       return inputHints + ", / для поиска подсказок";
     },
     Send: "Отправить",
+    Clear: "Очистить",
     Config: {
       Reset: "Сбросить настройки",
       SaveAs: "Сохранить как маску",

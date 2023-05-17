@@ -30,6 +30,7 @@ const tw: LocaleType = {
       return inputHints;
     },
     Send: "發送",
+    Clear: "清空",
     Config: {
       Reset: "重置默认",
       SaveAs: "另存为面具",

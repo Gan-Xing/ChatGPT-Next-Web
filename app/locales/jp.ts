@@ -31,6 +31,7 @@ const jp: LocaleType = {
       return inputHints + "，/ で自動補完をトリガー";
     },
     Send: "送信",
+    Clear: "クリア",
     Config: {
       Reset: "重置默认",
       SaveAs: "另存为面具",

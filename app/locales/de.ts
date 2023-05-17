@@ -31,6 +31,7 @@ const de: LocaleType = {
       return inputHints + ", / zum Durchsuchen von Prompts";
     },
     Send: "Senden",
+    Clear: "Leeren",
     Config: {
       Reset: "Reset to Default",
       SaveAs: "Save as Mask",

@@ -15,7 +15,7 @@ import MaskIcon from "../icons/mask.svg";
 import MaxIcon from "../icons/max.svg";
 import MinIcon from "../icons/min.svg";
 import ResetIcon from "../icons/reload.svg";
-
+import ClearIcon from "../icons/delete.svg";
 import LightIcon from "../icons/light.svg";
 import DarkIcon from "../icons/dark.svg";
 import AutoIcon from "../icons/auto.svg";
@@ -405,9 +405,10 @@ export function Chat() {
   type RenderMessage = ChatMessage & { preview?: boolean };
 
   const chatStore = useChatStore();
-  const [session, sessionIndex] = useChatStore((state) => [
+  const [session, sessionIndex, deleteSession] = useChatStore((state) => [
     state.currentSession(),
     state.currentSessionIndex,
+    state.deleteSession,
   ]);
   const config = useAppConfig();
   const fontSize = config.fontSize;
@@ -505,7 +506,7 @@ export function Chat() {
   };
 
   const doSubmit = (userInput: string) => {
-    if (userInput.trim() === "") return;
+    if (userInput.trim() === "") return deleteSession(sessionIndex);
     setIsLoading(true);
     chatStore.onUserInput(userInput).then(() => setIsLoading(false));
     localStorage.setItem(LAST_INPUT_KEY, userInput);
@@ -857,8 +858,8 @@ export function Chat() {
             autoFocus={autoFocus}
           />
           <IconButton
-            icon={<SendWhiteIcon />}
-            text={Locale.Chat.Send}
+            icon={userInput.length ? <SendWhiteIcon /> : <ClearIcon />}
+            text={userInput.length ? Locale.Chat.Send : Locale.Chat.Clear}
             className={styles["chat-input-send"]}
             type="primary"
             onClick={() => doSubmit(userInput)}

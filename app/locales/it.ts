@@ -31,6 +31,7 @@ const it: LocaleType = {
       return inputHints;
     },
     Send: "Invia",
+    Clear: "Cancellare",
     Config: {
       Reset: "Reset to Default",
       SaveAs: "Save as Mask",

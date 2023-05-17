@@ -31,6 +31,7 @@ const fr: LocaleType = {
       return inputHints + ", / pour rechercher des prompts";
     },
     Send: "Envoyer",
+    Clear: "Effacer",
     Config: {
       Reset: "Restaurer les paramètres par défaut",
       SaveAs: "Enregistrer en tant que masque",

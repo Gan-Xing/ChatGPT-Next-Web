@@ -31,6 +31,7 @@ const en: LocaleType = {
       return inputHints + ", / to search prompts";
     },
     Send: "Send",
+    Clear: "Clear",
     Config: {
       Reset: "Reset to Default",
       SaveAs: "Save as Mask",
