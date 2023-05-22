@@ -1,6 +1,9 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { StoreKey } from "../constant";
+import { useCustomConfig } from "./custom";
+
+const customState = useCustomConfig.getState();
 
 export enum SubmitKey {
   Enter = "Enter",
@@ -31,9 +34,11 @@ export const DEFAULT_CONFIG = {
 
   modelConfig: {
     model: "gpt-3.5-turbo" as ModelType,
-    temperature: 0.5,
-    max_tokens: 2000,
-    presence_penalty: 0,
+    temperature: customState?.customSet ? customState?.temperature : 0.5,
+    max_tokens: customState?.customSet ? customState?.maxTokens : 2000,
+    presence_penalty: customState?.customSet
+      ? customState?.presence_penalty
+      : 0,
     sendMemory: true,
     historyMessageCount: 4,
     compressMessageLengthThreshold: 1000,

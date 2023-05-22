@@ -24,6 +24,7 @@ export const DEFAULT_CUSTOM_CONFIG = {
   position: "Bottom Right",
   temperature: 0.8,
   maxTokens: 1024,
+  presence_penalty: 0,
   maxMessages: "10",
   textInputMaxLength: 8,
   embeddingSIndex: true,
