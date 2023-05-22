@@ -222,7 +222,7 @@ export const ChatDialog: React.FC = () => {
   };
 
   const handleInputChange = (
-    e: ChangeEvent<HTMLInputElement>,
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
     settingsGroup: string,
     settingKey: string,
   ) => {

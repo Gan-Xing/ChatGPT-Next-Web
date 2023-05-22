@@ -758,12 +758,12 @@ export function Chat() {
                   <div className={styles["chat-message-avatar"]}>
                     {message.role === "user" ? (
                       customState.customSet ? (
-                        customState.aiName
+                        customState.userName
                       ) : (
                         <Avatar avatar={config.avatar} />
                       )
                     ) : customState.customSet ? (
-                      customState.userName
+                      customState.aiName
                     ) : (
                       <MaskAvatar mask={session.mask} />
                     )}
