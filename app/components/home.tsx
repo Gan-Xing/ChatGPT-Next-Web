@@ -37,6 +37,13 @@ const Settings = dynamic(async () => (await import("./settings")).Settings, {
   loading: () => <Loading noLogo />,
 });
 
+const ChatDialog = dynamic(
+  async () => (await import("./chatdialog")).ChatDialog,
+  {
+    loading: () => <Loading noLogo />,
+  },
+);
+
 const Chat = dynamic(async () => (await import("./chat")).Chat, {
   loading: () => <Loading noLogo />,
 });
@@ -130,7 +137,7 @@ function Screen() {
         style={customConfig.customSet ? { width: "100%", height: "100vh" } : {}}
       >
         <Routes>
-          <Route path={Path.Home} element={<Chat />} />
+          <Route path={Path.Home} element={<ChatDialog />} />
           <Route path={Path.NewChat} element={<NewChat />} />
           <Route path={Path.Masks} element={<MaskPage />} />
           <Route path={Path.Chat} element={<Chat />} />
