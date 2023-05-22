@@ -496,7 +496,7 @@ export function Chat() {
     setIsTyping(true);
     const n = text.trim().length;
     if (customState.customSet && n > customState.textInputMaxLength) {
-      return
+      return;
     } else {
       setUserInput(text);
     }
@@ -509,379 +509,382 @@ export function Chat() {
         let searchText = text.slice(1);
         onSearch(searchText);
       }
-  };
+    }
 
-  const doSubmit = (userInput: string) => {
-    if (userInput.trim() === "") return deleteSession(sessionIndex);
-    setIsLoading(true);
-    chatStore.onUserInput(userInput).then(() => setIsLoading(false));
-    localStorage.setItem(LAST_INPUT_KEY, userInput);
-    setUserInput("");
-    setPromptHints([]);
-    if (!isMobileScreen) inputRef.current?.focus();
-    setAutoScroll(true);
-    setIsTyping(false);
-  };
+    const doSubmit = (userInput: string) => {
+      if (userInput.trim() === "") return deleteSession(sessionIndex);
+      setIsLoading(true);
+      chatStore.onUserInput(userInput).then(() => setIsLoading(false));
+      localStorage.setItem(LAST_INPUT_KEY, userInput);
+      setUserInput("");
+      setPromptHints([]);
+      if (!isMobileScreen) inputRef.current?.focus();
+      setAutoScroll(true);
+      setIsTyping(false);
+    };
 
-  // stop response
-  const onUserStop = (messageId: number) => {
-    ChatControllerPool.stop(sessionIndex, messageId);
-  };
+    // stop response
+    const onUserStop = (messageId: number) => {
+      ChatControllerPool.stop(sessionIndex, messageId);
+    };
 
-  // check if should send message
-  const onInputKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    // if ArrowUp and no userInput, fill with last input
+    // check if should send message
+    const onInputKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      // if ArrowUp and no userInput, fill with last input
+      if (
+        e.key === "ArrowUp" &&
+        userInput.length <= 0 &&
+        !(e.metaKey || e.altKey || e.ctrlKey)
+      ) {
+        setIsTyping(true);
+        setUserInput(localStorage.getItem(LAST_INPUT_KEY) ?? "");
+        e.preventDefault();
+        return;
+      }
+      if (shouldSubmit(e)) {
+        doSubmit(userInput);
+        e.preventDefault();
+      }
+    };
+    const onRightClick = (e: any, message: ChatMessage) => {
+      // copy to clipboard
+      if (selectOrCopy(e.currentTarget, message.content)) {
+        e.preventDefault();
+      }
+    };
+
+    const findLastUserIndex = (messageId: number) => {
+      // find last user input message and resend
+      let lastUserMessageIndex: number | null = null;
+      for (let i = 0; i < session.messages.length; i += 1) {
+        const message = session.messages[i];
+        if (message.id === messageId) {
+          break;
+        }
+        if (message.role === "user") {
+          lastUserMessageIndex = i;
+        }
+      }
+
+      return lastUserMessageIndex;
+    };
+
+    const deleteMessage = (userIndex: number) => {
+      chatStore.updateCurrentSession((session) =>
+        session.messages.splice(userIndex, 2),
+      );
+    };
+
+    const onDelete = (botMessageId: number) => {
+      const userIndex = findLastUserIndex(botMessageId);
+      if (userIndex === null) return;
+      deleteMessage(userIndex);
+    };
+
+    const onResend = (botMessageId: number) => {
+      // find last user input message and resend
+      const userIndex = findLastUserIndex(botMessageId);
+      if (userIndex === null) return;
+
+      setIsLoading(true);
+      const content = session.messages[userIndex].content;
+      deleteMessage(userIndex);
+      chatStore.onUserInput(content).then(() => setIsLoading(false));
+      inputRef.current?.focus();
+    };
+
+    const context: RenderMessage[] = session.mask.context.slice();
+
+    const accessStore = useAccessStore();
+
     if (
-      e.key === "ArrowUp" &&
-      userInput.length <= 0 &&
-      !(e.metaKey || e.altKey || e.ctrlKey)
+      context.length === 0 &&
+      session.messages.at(0)?.content !== BOT_HELLO.content
     ) {
-      setIsTyping(true);
-      setUserInput(localStorage.getItem(LAST_INPUT_KEY) ?? "");
-      e.preventDefault();
-      return;
-    }
-    if (shouldSubmit(e)) {
-      doSubmit(userInput);
-      e.preventDefault();
-    }
-  };
-  const onRightClick = (e: any, message: ChatMessage) => {
-    // copy to clipboard
-    if (selectOrCopy(e.currentTarget, message.content)) {
-      e.preventDefault();
-    }
-  };
-
-  const findLastUserIndex = (messageId: number) => {
-    // find last user input message and resend
-    let lastUserMessageIndex: number | null = null;
-    for (let i = 0; i < session.messages.length; i += 1) {
-      const message = session.messages[i];
-      if (message.id === messageId) {
-        break;
+      const copiedHello = Object.assign({}, BOT_HELLO);
+      if (!accessStore.isAuthorized() && !customState.customSet) {
+        copiedHello.content = Locale.Error.Unauthorized;
       }
-      if (message.role === "user") {
-        lastUserMessageIndex = i;
+      context.push(copiedHello);
+    }
+
+    // preview messages
+    const messages = context
+      .concat(session.messages as RenderMessage[])
+      .concat(
+        isLoading
+          ? [
+              {
+                ...createMessage({
+                  role: "assistant",
+                  content: "……",
+                }),
+                preview: true,
+              },
+            ]
+          : [],
+      )
+      .concat(
+        userInput.length > 0 && config.sendPreviewBubble
+          ? [
+              {
+                ...createMessage({
+                  role: "user",
+                  content: userInput,
+                }),
+                preview: true,
+              },
+            ]
+          : [],
+      );
+
+    const [showPromptModal, setShowPromptModal] = useState(false);
+
+    const renameSession = () => {
+      const newTopic = prompt(Locale.Chat.Rename, session.topic);
+      if (newTopic && newTopic !== session.topic) {
+        chatStore.updateCurrentSession(
+          (session) => (session.topic = newTopic!),
+        );
       }
-    }
+    };
 
-    return lastUserMessageIndex;
-  };
+    const location = useLocation();
+    const isChat = location.pathname === Path.Chat;
+    const autoFocus = !isMobileScreen || isChat; // only focus in chat page
 
-  const deleteMessage = (userIndex: number) => {
-    chatStore.updateCurrentSession((session) =>
-      session.messages.splice(userIndex, 2),
-    );
-  };
+    useCommand({
+      fill: setUserInput,
+      submit: (text) => {
+        doSubmit(text);
+      },
+    });
 
-  const onDelete = (botMessageId: number) => {
-    const userIndex = findLastUserIndex(botMessageId);
-    if (userIndex === null) return;
-    deleteMessage(userIndex);
-  };
-
-  const onResend = (botMessageId: number) => {
-    // find last user input message and resend
-    const userIndex = findLastUserIndex(botMessageId);
-    if (userIndex === null) return;
-
-    setIsLoading(true);
-    const content = session.messages[userIndex].content;
-    deleteMessage(userIndex);
-    chatStore.onUserInput(content).then(() => setIsLoading(false));
-    inputRef.current?.focus();
-  };
-
-  const context: RenderMessage[] = session.mask.context.slice();
-
-  const accessStore = useAccessStore();
-
-  if (
-    context.length === 0 &&
-    session.messages.at(0)?.content !== BOT_HELLO.content
-  ) {
-    const copiedHello = Object.assign({}, BOT_HELLO);
-    if (!accessStore.isAuthorized() && !customState.customSet) {
-      copiedHello.content = Locale.Error.Unauthorized;
-    }
-    context.push(copiedHello);
-  }
-
-  // preview messages
-  const messages = context
-    .concat(session.messages as RenderMessage[])
-    .concat(
-      isLoading
-        ? [
-            {
-              ...createMessage({
-                role: "assistant",
-                content: "……",
-              }),
-              preview: true,
-            },
-          ]
-        : [],
-    )
-    .concat(
-      userInput.length > 0 && config.sendPreviewBubble
-        ? [
-            {
-              ...createMessage({
-                role: "user",
-                content: userInput,
-              }),
-              preview: true,
-            },
-          ]
-        : [],
-    );
-
-  const [showPromptModal, setShowPromptModal] = useState(false);
-
-  const renameSession = () => {
-    const newTopic = prompt(Locale.Chat.Rename, session.topic);
-    if (newTopic && newTopic !== session.topic) {
-      chatStore.updateCurrentSession((session) => (session.topic = newTopic!));
-    }
-  };
-
-  const location = useLocation();
-  const isChat = location.pathname === Path.Chat;
-  const autoFocus = !isMobileScreen || isChat; // only focus in chat page
-
-  useCommand({
-    fill: setUserInput,
-    submit: (text) => {
-      doSubmit(text);
-    },
-  });
-
-  return (
-    <div className={styles.chat} key={session.id}>
-      <div
-        className="window-header"
-        style={{ display: customState.customSet ? "none" : "" }}
-      >
-        <div className="window-header-title">
-          <div
-            className={`window-header-main-title " ${styles["chat-body-title"]}`}
-            onClickCapture={renameSession}
-          >
-            {!session.topic ? DEFAULT_TOPIC : session.topic}
+    return (
+      <div className={styles.chat} key={session.id}>
+        <div
+          className="window-header"
+          style={{ display: customState.customSet ? "none" : "" }}
+        >
+          <div className="window-header-title">
+            <div
+              className={`window-header-main-title " ${styles["chat-body-title"]}`}
+              onClickCapture={renameSession}
+            >
+              {!session.topic ? DEFAULT_TOPIC : session.topic}
+            </div>
+            <div className="window-header-sub-title">
+              {Locale.Chat.SubTitle(session.messages.length)}
+            </div>
           </div>
-          <div className="window-header-sub-title">
-            {Locale.Chat.SubTitle(session.messages.length)}
-          </div>
-        </div>
-        <div className="window-actions">
-          <div className={"window-action-button" + " " + styles.mobile}>
-            <IconButton
-              icon={<ReturnIcon />}
-              bordered
-              title={Locale.Chat.Actions.ChatList}
-              onClick={() => navigate(Path.Home)}
-            />
-          </div>
-          <div className="window-action-button">
-            <IconButton
-              icon={<RenameIcon />}
-              bordered
-              onClick={renameSession}
-            />
-          </div>
-          <div className="window-action-button">
-            <IconButton
-              icon={<ExportIcon />}
-              bordered
-              title={Locale.Chat.Actions.Export}
-              onClick={() => {
-                exportMessages(
-                  session.messages.filter((msg) => !msg.isError),
-                  session.topic,
-                );
-              }}
-            />
-          </div>
-          {!isMobileScreen && (
+          <div className="window-actions">
+            <div className={"window-action-button" + " " + styles.mobile}>
+              <IconButton
+                icon={<ReturnIcon />}
+                bordered
+                title={Locale.Chat.Actions.ChatList}
+                onClick={() => navigate(Path.Home)}
+              />
+            </div>
             <div className="window-action-button">
               <IconButton
-                icon={config.tightBorder ? <MinIcon /> : <MaxIcon />}
+                icon={<RenameIcon />}
                 bordered
+                onClick={renameSession}
+              />
+            </div>
+            <div className="window-action-button">
+              <IconButton
+                icon={<ExportIcon />}
+                bordered
+                title={Locale.Chat.Actions.Export}
                 onClick={() => {
-                  config.update(
-                    (config) => (config.tightBorder = !config.tightBorder),
+                  exportMessages(
+                    session.messages.filter((msg) => !msg.isError),
+                    session.topic,
                   );
                 }}
               />
             </div>
-          )}
+            {!isMobileScreen && (
+              <div className="window-action-button">
+                <IconButton
+                  icon={config.tightBorder ? <MinIcon /> : <MaxIcon />}
+                  bordered
+                  onClick={() => {
+                    config.update(
+                      (config) => (config.tightBorder = !config.tightBorder),
+                    );
+                  }}
+                />
+              </div>
+            )}
+          </div>
+
+          <PromptToast
+            showToast={!hitBottom}
+            showModal={showPromptModal}
+            setShowModal={setShowPromptModal}
+          />
         </div>
 
-        <PromptToast
-          showToast={!hitBottom}
-          showModal={showPromptModal}
-          setShowModal={setShowPromptModal}
-        />
-      </div>
-
-      <div
-        className={styles["chat-body"]}
-        ref={scrollRef}
-        onScroll={(e) => onChatBodyScroll(e.currentTarget)}
-        onMouseDown={() => inputRef.current?.blur()}
-        onWheel={(e) => setAutoScroll(hitBottom && e.deltaY > 0)}
-        onTouchStart={() => {
-          inputRef.current?.blur();
-          setAutoScroll(false);
-        }}
-      >
-        {messages.map((message, i) => {
-          const isUser = message.role === "user";
-          const isLastUserMessage = isUser && i === messages.length - 1;
-          const showActions =
-            !isUser &&
-            i > 0 &&
-            !(message.preview || message.content.length === 0);
-          const showTyping = message.preview || message.streaming;
-          return (
-            <div
-              key={i}
-              className={
-                isUser ? styles["chat-message-user"] : styles["chat-message"]
-              }
-            >
-              {(!isTyping || !isLastUserMessage) && (
-                <div className={styles["chat-message-container"]}>
-                  <div className={styles["chat-message-avatar"]}>
-                    {message.role === "user" ? (
-                      customState.customSet ? (
-                        customState.aiName
+        <div
+          className={styles["chat-body"]}
+          ref={scrollRef}
+          onScroll={(e) => onChatBodyScroll(e.currentTarget)}
+          onMouseDown={() => inputRef.current?.blur()}
+          onWheel={(e) => setAutoScroll(hitBottom && e.deltaY > 0)}
+          onTouchStart={() => {
+            inputRef.current?.blur();
+            setAutoScroll(false);
+          }}
+        >
+          {messages.map((message, i) => {
+            const isUser = message.role === "user";
+            const isLastUserMessage = isUser && i === messages.length - 1;
+            const showActions =
+              !isUser &&
+              i > 0 &&
+              !(message.preview || message.content.length === 0);
+            const showTyping = message.preview || message.streaming;
+            return (
+              <div
+                key={i}
+                className={
+                  isUser ? styles["chat-message-user"] : styles["chat-message"]
+                }
+              >
+                {(!isTyping || !isLastUserMessage) && (
+                  <div className={styles["chat-message-container"]}>
+                    <div className={styles["chat-message-avatar"]}>
+                      {message.role === "user" ? (
+                        customState.customSet ? (
+                          customState.aiName
+                        ) : (
+                          <Avatar avatar={config.avatar} />
+                        )
+                      ) : customState.customSet ? (
+                        customState.userName
                       ) : (
-                        <Avatar avatar={config.avatar} />
-                      )
-                    ) : customState.customSet ? (
-                      customState.userName
-                    ) : (
-                      <MaskAvatar mask={session.mask} />
-                    )}
-                  </div>
-                  {showTyping && (
-                    <div className={styles["chat-message-status"]}>
-                      {Locale.Chat.Typing}
+                        <MaskAvatar mask={session.mask} />
+                      )}
                     </div>
-                  )}
-                  <div className={styles["chat-message-item"]}>
-                    {showActions && (
-                      <div className={styles["chat-message-top-actions"]}>
-                        {message.streaming ? (
+                    {showTyping && (
+                      <div className={styles["chat-message-status"]}>
+                        {Locale.Chat.Typing}
+                      </div>
+                    )}
+                    <div className={styles["chat-message-item"]}>
+                      {showActions && (
+                        <div className={styles["chat-message-top-actions"]}>
+                          {message.streaming ? (
+                            <div
+                              className={styles["chat-message-top-action"]}
+                              onClick={() => onUserStop(message.id ?? i)}
+                            >
+                              {Locale.Chat.Actions.Stop}
+                            </div>
+                          ) : (
+                            <>
+                              <div
+                                className={styles["chat-message-top-action"]}
+                                onClick={() => onDelete(message.id ?? i)}
+                              >
+                                {Locale.Chat.Actions.Delete}
+                              </div>
+                              <div
+                                className={styles["chat-message-top-action"]}
+                                onClick={() => onResend(message.id ?? i)}
+                              >
+                                {Locale.Chat.Actions.Retry}
+                              </div>
+                            </>
+                          )}
+
                           <div
                             className={styles["chat-message-top-action"]}
-                            onClick={() => onUserStop(message.id ?? i)}
+                            onClick={() => copyToClipboard(message.content)}
                           >
-                            {Locale.Chat.Actions.Stop}
+                            {Locale.Chat.Actions.Copy}
                           </div>
-                        ) : (
-                          <>
-                            <div
-                              className={styles["chat-message-top-action"]}
-                              onClick={() => onDelete(message.id ?? i)}
-                            >
-                              {Locale.Chat.Actions.Delete}
-                            </div>
-                            <div
-                              className={styles["chat-message-top-action"]}
-                              onClick={() => onResend(message.id ?? i)}
-                            >
-                              {Locale.Chat.Actions.Retry}
-                            </div>
-                          </>
-                        )}
-
-                        <div
-                          className={styles["chat-message-top-action"]}
-                          onClick={() => copyToClipboard(message.content)}
-                        >
-                          {Locale.Chat.Actions.Copy}
+                        </div>
+                      )}
+                      <Markdown
+                        content={message.content}
+                        loading={
+                          (message.preview || message.content.length === 0) &&
+                          !isUser
+                        }
+                        onContextMenu={(e) => onRightClick(e, message)}
+                        onDoubleClickCapture={() => {
+                          if (!isMobileScreen) return;
+                          setUserInput(message.content);
+                        }}
+                        fontSize={fontSize}
+                        parentRef={scrollRef}
+                        defaultShow={i >= messages.length - 10}
+                      />
+                    </div>
+                    {!isUser && !message.preview && (
+                      <div className={styles["chat-message-actions"]}>
+                        <div className={styles["chat-message-action-date"]}>
+                          {message.date.toLocaleString()}
                         </div>
                       </div>
                     )}
-                    <Markdown
-                      content={message.content}
-                      loading={
-                        (message.preview || message.content.length === 0) &&
-                        !isUser
-                      }
-                      onContextMenu={(e) => onRightClick(e, message)}
-                      onDoubleClickCapture={() => {
-                        if (!isMobileScreen) return;
-                        setUserInput(message.content);
-                      }}
-                      fontSize={fontSize}
-                      parentRef={scrollRef}
-                      defaultShow={i >= messages.length - 10}
-                    />
                   </div>
-                  {!isUser && !message.preview && (
-                    <div className={styles["chat-message-actions"]}>
-                      <div className={styles["chat-message-action-date"]}>
-                        {message.date.toLocaleString()}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
 
-      <div className={styles["chat-input-panel"]}>
-        <PromptHints prompts={promptHints} onPromptSelect={onPromptSelect} />
+        <div className={styles["chat-input-panel"]}>
+          <PromptHints prompts={promptHints} onPromptSelect={onPromptSelect} />
 
-        <ChatActions
-          showPromptModal={() => setShowPromptModal(true)}
-          scrollToBottom={scrollToBottom}
-          hitBottom={hitBottom}
-          showPromptHints={() => {
-            // Click again to close
-            if (promptHints.length > 0) {
-              setPromptHints([]);
-              return;
-            }
+          <ChatActions
+            showPromptModal={() => setShowPromptModal(true)}
+            scrollToBottom={scrollToBottom}
+            hitBottom={hitBottom}
+            showPromptHints={() => {
+              // Click again to close
+              if (promptHints.length > 0) {
+                setPromptHints([]);
+                return;
+              }
 
-            inputRef.current?.focus();
-            setUserInput("/");
-            onSearch("");
-          }}
-        />
-        <div className={styles["chat-input-panel-inner"]}>
-          <textarea
-            ref={inputRef}
-            className={styles["chat-input"]}
-            placeholder={
-              customState.customSet
-                ? customState.placeholder
-                : Locale.Chat.Input(submitKey)
-            }
-            onInput={(e) => onInput(e.currentTarget.value)}
-            value={userInput}
-            onKeyDown={onInputKeyDown}
-            onFocus={() => setAutoScroll(true)}
-            onBlur={() => setAutoScroll(false)}
-            rows={inputRows}
-            autoFocus={autoFocus}
+              inputRef.current?.focus();
+              setUserInput("/");
+              onSearch("");
+            }}
           />
-          <IconButton
-            icon={userInput.length ? <SendWhiteIcon /> : <ClearIcon />}
-            text={userInput.length ? Locale.Chat.Send : Locale.Chat.Clear}
-            className={styles["chat-input-send"]}
-            type="primary"
-            onClick={() => doSubmit(userInput)}
-          />
+          <div className={styles["chat-input-panel-inner"]}>
+            <textarea
+              ref={inputRef}
+              className={styles["chat-input"]}
+              placeholder={
+                customState.customSet
+                  ? customState.placeholder
+                  : Locale.Chat.Input(submitKey)
+              }
+              onInput={(e) => onInput(e.currentTarget.value)}
+              value={userInput}
+              onKeyDown={onInputKeyDown}
+              onFocus={() => setAutoScroll(true)}
+              onBlur={() => setAutoScroll(false)}
+              rows={inputRows}
+              autoFocus={autoFocus}
+            />
+            <IconButton
+              icon={userInput.length ? <SendWhiteIcon /> : <ClearIcon />}
+              text={userInput.length ? Locale.Chat.Send : Locale.Chat.Clear}
+              className={styles["chat-input-send"]}
+              type="primary"
+              onClick={() => doSubmit(userInput)}
+            />
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 }
