@@ -60,6 +60,7 @@ import { Avatar } from "./emoji";
 import { MaskAvatar, MaskConfig } from "./mask";
 import { useMaskStore } from "../store/mask";
 import { useCommand } from "../command";
+import React from "react";
 
 const Markdown = dynamic(async () => (await import("./markdown")).Markdown, {
   loading: () => <LoadingIcon />,
@@ -492,9 +493,13 @@ export function Chat() {
   // only search prompts when user input is short
   const SEARCH_TEXT_LIMIT = 30;
   const onInput = (text: string) => {
-    setUserInput(text);
     setIsTyping(true);
     const n = text.trim().length;
+    if (customState.customSet && n > customState.textInputMaxLength) {
+      return
+    } else {
+      setUserInput(text);
+    }
     // clear search results
     if (n === 0) {
       setPromptHints([]);
@@ -504,7 +509,6 @@ export function Chat() {
         let searchText = text.slice(1);
         onSearch(searchText);
       }
-    }
   };
 
   const doSubmit = (userInput: string) => {
@@ -752,7 +756,13 @@ export function Chat() {
                 <div className={styles["chat-message-container"]}>
                   <div className={styles["chat-message-avatar"]}>
                     {message.role === "user" ? (
-                      <Avatar avatar={config.avatar} />
+                      customState.customSet ? (
+                        customState.aiName
+                      ) : (
+                        <Avatar avatar={config.avatar} />
+                      )
+                    ) : customState.customSet ? (
+                      customState.userName
                     ) : (
                       <MaskAvatar mask={session.mask} />
                     )}
@@ -850,7 +860,11 @@ export function Chat() {
           <textarea
             ref={inputRef}
             className={styles["chat-input"]}
-            placeholder={Locale.Chat.Input(submitKey)}
+            placeholder={
+              customState.customSet
+                ? customState.placeholder
+                : Locale.Chat.Input(submitKey)
+            }
             onInput={(e) => onInput(e.currentTarget.value)}
             value={userInput}
             onKeyDown={onInputKeyDown}

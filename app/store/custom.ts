@@ -23,9 +23,10 @@ export const DEFAULT_CUSTOM_CONFIG = {
     "http://127.0.0.1:8084/wp-content/plugins/ai-engine/images/chat-color-green.svg",
   position: "Bottom Right",
   temperature: 0.8,
+  presence_penalty: 0,
   maxTokens: 1024,
-  maxMessages: "10",
-  textInputMaxLength: "512",
+  maxMessages: 10,
+  textInputMaxLength: 512,
   embeddingSIndex: true,
 };
 

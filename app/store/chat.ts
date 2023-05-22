@@ -13,6 +13,7 @@ import { ChatControllerPool } from "../client/controller";
 import { prettyObject } from "../utils/format";
 import { useCustomConfig } from "./custom";
 
+const customConfig = useCustomConfig.getState();
 export type ChatMessage = RequestMessage & {
   date: string;
   streaming?: boolean;
@@ -54,7 +55,7 @@ export interface ChatSession {
 export const DEFAULT_TOPIC = Locale.Store.DefaultTopic;
 export const BOT_HELLO: ChatMessage = createMessage({
   role: "assistant",
-  content: Locale.Store.BotHello,
+  content: customConfig?.startSentence ?? Locale.Store.BotHello,
 });
 
 function createEmptySession(): ChatSession {
@@ -175,7 +176,6 @@ export const useChatStore = create<ChatStore>()(
       deleteSession(index) {
         const deletingLastSession = get().sessions.length === 1;
         const deletedSession = get().sessions.at(index);
-        const customConfig = useCustomConfig.getState();
 
         if (!deletedSession) return;
 
