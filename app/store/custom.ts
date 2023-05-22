@@ -25,7 +25,7 @@ export const DEFAULT_CUSTOM_CONFIG = {
   temperature: 0.8,
   maxTokens: 1024,
   maxMessages: "10",
-  textInputMaxLength: "512",
+  textInputMaxLength: 8,
   embeddingSIndex: true,
 };
 

@@ -432,6 +432,7 @@ export function Chat() {
         typeof customUrl === "string"
           ? `${customUrl}/wp-json/aigc/v1/aigc/context`
           : config.customUrl;
+      config.textInputMaxLength = 8;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search_id, customUrl, stremConfig]);
@@ -492,9 +493,13 @@ export function Chat() {
   // only search prompts when user input is short
   const SEARCH_TEXT_LIMIT = 30;
   const onInput = (text: string) => {
-    setUserInput(text);
     setIsTyping(true);
     const n = text.trim().length;
+    if (customState.customSet && n > customState.textInputMaxLength) {
+      return;
+    } else {
+      setUserInput(text);
+    }
     // clear search results
     if (n === 0) {
       setPromptHints([]);
