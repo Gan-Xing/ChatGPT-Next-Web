@@ -22,7 +22,7 @@ import {
   useLocation,
 } from "react-router-dom";
 import { SideBar } from "./sidebar";
-import { useAppConfig, useCustomConfig } from "../store";
+import { useAppConfig, useCustomConfig, CustomConfigStore } from "../store";
 
 export function Loading(props: { noLogo?: boolean }) {
   return (
@@ -108,7 +108,7 @@ const loadAsyncGoogleFont = () => {
 function Screen() {
   const config = useAppConfig();
   const customConfig = {
-    ...useCustomConfig.getState(),
+    ...(useCustomConfig.getState() as CustomConfigStore),
   };
   const location = useLocation();
   const isHome = location.pathname === Path.Home;

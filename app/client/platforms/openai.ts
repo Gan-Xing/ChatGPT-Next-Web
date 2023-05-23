@@ -4,6 +4,7 @@ import {
   useAppConfig,
   useChatStore,
   useCustomConfig,
+  CustomConfigStore
 } from "@/app/store";
 
 import { ChatOptions, getHeaders, LLMApi, LLMUsage } from "../api";
@@ -38,7 +39,7 @@ export class ChatGPTApi implements LLMApi {
     }));
 
     const customConfig = {
-      ...useCustomConfig.getState(),
+      ...(useCustomConfig.getState() as CustomConfigStore),
       ...useChatStore.getState().currentSession(),
     };
     const modelConfig = {

@@ -1,9 +1,9 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { StoreKey } from "../constant";
-import { useCustomConfig } from "./custom";
+import { useCustomConfig, CustomConfigStore } from "./custom";
 
-const customState = useCustomConfig.getState();
+const customState = useCustomConfig.getState() as CustomConfigStore;
 
 export enum SubmitKey {
   Enter = "Enter",

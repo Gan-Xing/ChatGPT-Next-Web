@@ -11,9 +11,9 @@ import { StoreKey } from "../constant";
 import { api, RequestMessage } from "../client/api";
 import { ChatControllerPool } from "../client/controller";
 import { prettyObject } from "../utils/format";
-import { useCustomConfig } from "./custom";
+import { useCustomConfig, CustomConfigStore } from "./custom";
 
-const customConfig = useCustomConfig.getState();
+const customConfig = useCustomConfig.getState() as CustomConfigStore;
 export type ChatMessage = RequestMessage & {
   date: string;
   streaming?: boolean;

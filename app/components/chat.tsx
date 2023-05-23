@@ -33,6 +33,8 @@ import {
   useAppConfig,
   DEFAULT_TOPIC,
   useCustomConfig,
+  CustomConfigStore,
+  CustomConfigTypeBase,
 } from "../store";
 
 import {
@@ -322,7 +324,7 @@ export function ChatActions(props: {
   const config = useAppConfig();
   const navigate = useNavigate();
   const customState = {
-    ...useCustomConfig.getState(),
+    ...(useCustomConfig.getState() as CustomConfigStore),
   };
 
   // switch themes
@@ -415,9 +417,10 @@ export function Chat() {
 
   const router = useRouter();
   const { search_id, customUrl, stremConfig } = router.query;
-  const customConfig = useCustomConfig();
+  const customConfig = useCustomConfig.getState() as CustomConfigStore;
+
   const customState = {
-    ...useCustomConfig.getState(),
+    ...(customConfig as CustomConfigStore),
   };
   useEffect(() => {
     const customStream =
@@ -425,7 +428,7 @@ export function Chat() {
     chatStore.setStreamConfig(customStream);
     customState.customSet &&
       chatStore.deleteSession(chatStore.currentSessionIndex);
-    customConfig.update((config) => {
+    customConfig.update((config: CustomConfigTypeBase) => {
       config.searchId =
         typeof search_id === "string" ? search_id : config.searchId;
       config.customUrl =
@@ -744,7 +747,8 @@ export function Chat() {
           const showActions =
             !isUser &&
             i > 0 &&
-            !(message.preview || message.content.length === 0);
+            !(message.preview || message.content.length === 0) &&
+            customState.showAction;
           const showTyping = message.preview || message.streaming;
           return (
             <div
@@ -799,7 +803,6 @@ export function Chat() {
                             </div>
                           </>
                         )}
-
                         <div
                           className={styles["chat-message-top-action"]}
                           onClick={() => copyToClipboard(message.content)}
@@ -876,7 +879,15 @@ export function Chat() {
           />
           <IconButton
             icon={userInput.length ? <SendWhiteIcon /> : <ClearIcon />}
-            text={userInput.length ? Locale.Chat.Send : Locale.Chat.Clear}
+            text={
+              userInput.length
+                ? customState.sendText === ""
+                  ? Locale.Chat.Send
+                  : customState.sendText
+                : customState.clearText === ""
+                ? Locale.Chat.Clear
+                : customState.clearText
+            }
             className={styles["chat-input-send"]}
             type="primary"
             onClick={() => doSubmit(userInput)}
